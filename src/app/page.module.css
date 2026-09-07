@@ -1,0 +1,25 @@
+.page {
+  display: flex;
+  justify-content: center;
+  min-height: 100dvh;
+  padding: 24px 16px;
+}
+
+.shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 880px;
+  min-height: 0;
+  height: calc(100dvh - 48px);
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 0;
+  }
+
+  .shell {
+    height: 100dvh;
+  }
+}
