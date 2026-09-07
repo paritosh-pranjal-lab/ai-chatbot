@@ -1,0 +1,121 @@
+.assistant,
+.user {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.assistant {
+  align-self: stretch;
+  align-items: flex-start;
+}
+
+.user {
+  align-self: flex-end;
+  align-items: flex-end;
+  max-width: 86%;
+}
+
+.role {
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.spinner {
+  width: 11px;
+  height: 11px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 700ms linear infinite;
+}
+
+.bubble {
+  max-width: 100%;
+  padding: 11px 15px;
+  border-radius: var(--radius-md);
+  /* Model output arrives as plain text; keep its newlines and spacing. */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.assistant .bubble {
+  background: var(--surface-muted);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: var(--radius-sm);
+}
+
+.user .bubble {
+  color: var(--bubble-user-fg);
+  background: var(--bubble-user);
+  border-bottom-right-radius: var(--radius-sm);
+}
+
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--accent);
+  animation: blink 1s step-end infinite;
+}
+
+.dots {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+  height: 1.6em;
+}
+
+.dots span {
+  width: 6px;
+  height: 6px;
+  background: var(--text-muted);
+  border-radius: 50%;
+  animation: bounce 1.2s ease-in-out infinite;
+}
+
+.dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    opacity: 0.3;
+    transform: translateY(0);
+  }
+  40% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
