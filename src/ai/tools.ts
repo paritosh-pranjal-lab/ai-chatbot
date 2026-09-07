@@ -2,8 +2,8 @@ import type Anthropic from "@anthropic-ai/sdk";
 
 import type { Product, ProductQuery } from "@/types/product";
 
-import { MAX_PRODUCTS_PER_SEARCH } from "./limits";
-import { productSource } from "./products";
+import { MAX_PRODUCTS_PER_SEARCH } from "@/shared/limits";
+import { productSource } from "./catalog";
 
 export const SEARCH_PRODUCTS = "search_products";
 
@@ -11,7 +11,7 @@ export const SEARCH_PRODUCTS = "search_products";
  * The tool the model sees. The description is doing real work here — it is the
  * only place the model learns when to search and what the filters mean.
  */
-export const tools: Anthropic.Tool[] = [
+export const tools: Anthropic.Beta.BetaTool[] = [
   {
     name: SEARCH_PRODUCTS,
     description: `Search the WorldTradeX wholesale catalog of agricultural

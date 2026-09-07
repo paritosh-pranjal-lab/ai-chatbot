@@ -3,7 +3,7 @@
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 
 import type { ChatStatus } from "@/hooks/useChat";
-import { MAX_MESSAGE_CHARS } from "@/lib/limits";
+import { MAX_MESSAGE_CHARS } from "@/shared/limits";
 
 import styles from "./Composer.module.css";
 

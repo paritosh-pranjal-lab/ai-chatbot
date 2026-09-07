@@ -17,9 +17,6 @@ export const MAX_TOKENS = 8_000;
  */
 export const MAX_TOOL_TURNS = 3;
 
-/** Display name for the bot, shown above each of its replies. */
-export const BOT_NAME = "Sourcing Assistant";
-
 export function buildSystemPrompt(categories: string[]): string {
   const categoryLine =
     categories.length > 0

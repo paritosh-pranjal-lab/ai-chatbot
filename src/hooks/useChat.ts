@@ -2,7 +2,7 @@
 
 import { useCallback, useRef, useState } from "react";
 
-import { parseEventBuffer } from "@/lib/stream";
+import { parseEventBuffer } from "@/shared/stream";
 import type { ChatMessage, UiMessage } from "@/types/chat";
 import type { Product } from "@/types/product";
 
@@ -12,7 +12,10 @@ let idCounter = 0;
 const nextId = () => `msg-${++idCounter}`;
 
 /** Keeps the first occurrence of each product across repeated searches. */
-function mergeProducts(existing: Product[] | undefined, incoming: Product[]): Product[] {
+function mergeProducts(
+  existing: Product[] | undefined,
+  incoming: Product[],
+): Product[] {
   const merged = [...(existing ?? [])];
   const seen = new Set(merged.map((product) => product.id));
 
@@ -44,10 +47,11 @@ export function useChat(): UseChatResult {
   const [status, setStatus] = useState<ChatStatus>("idle");
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
-
+  
   const stop = useCallback(() => {
     abortRef.current?.abort();
   }, []);
+  console.log("🚀 ~ useChat ~ abortRef:", abortRef.current)
 
   const clear = useCallback(() => {
     abortRef.current?.abort();
@@ -85,26 +89,33 @@ export function useChat(): UseChatResult {
 
       const patchAssistant = (update: (message: UiMessage) => UiMessage) =>
         setMessages((prev) =>
-          prev.map((message) => (message.id === assistantId ? update(message) : message)),
+          prev.map((message) =>
+            message.id === assistantId ? update(message) : message,
+          ),
         );
 
       try {
-        const response = await fetch("/api/chat", {
+        const options = {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messages: history }),
           signal: controller.signal,
-        });
+        };
+        const response = await fetch("/api/chat", options);
 
         if (!response.ok || !response.body) {
           const message = await response
             .json()
             .then((data: { error?: string }) => data.error)
             .catch(() => undefined);
-          throw new Error(message ?? `Request failed with status ${response.status}.`);
+          throw new Error(
+            message ?? `Request failed with status ${response.status}.`,
+          );
         }
 
-        const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
+        const reader = response.body
+          .pipeThrough(new TextDecoderStream())
+          .getReader();
         let buffer = "";
         let streamError: string | null = null;
 
@@ -150,7 +161,9 @@ export function useChat(): UseChatResult {
       } catch (caught) {
         // An abort is the user pressing Stop, not a failure.
         if (!(caught instanceof Error) || caught.name !== "AbortError") {
-          setError(caught instanceof Error ? caught.message : "Something went wrong.");
+          setError(
+            caught instanceof Error ? caught.message : "Something went wrong.",
+          );
         }
       } finally {
         abortRef.current = null;
@@ -159,7 +172,9 @@ export function useChat(): UseChatResult {
           prev
             // Clear any status line left behind by an aborted turn.
             .map((message) =>
-              message.id === assistantId ? { ...message, status: undefined } : message,
+              message.id === assistantId
+                ? { ...message, status: undefined }
+                : message,
             )
             // Drop a placeholder that never received anything.
             .filter(

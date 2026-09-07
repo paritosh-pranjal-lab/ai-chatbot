@@ -20,7 +20,7 @@ function formatMoney(value: number, currency: string): string {
 }
 
 function formatCount(value: number): string {
-  return new Intl.NumberFormat("en-US").format(value);
+  return new Intl.NumberFormat("en-US", { notation: "compact" }).format(value);
 }
 
 export default function ProductCard({ product }: { product: Product }) {
@@ -28,9 +28,14 @@ export default function ProductCard({ product }: { product: Product }) {
   const [imageFailed, setImageFailed] = useState(false);
   const showImage = product.imageUrl !== null && !imageFailed;
 
+  // One muted line carries type, origin and rating, so each is not its own row.
+  const facts = [product.category, product.country, product.rating !== null && product.rating > 0 ? `★ ${product.rating.toFixed(1)}` : null]
+    .filter((fact): fact is string => typeof fact === "string" && fact.length > 0)
+    .join(" · ");
+
   const body = (
     <>
-      <div className={styles.media}>
+      <div className={styles.thumb}>
         {showImage ? (
           // A plain <img>: next/image would need every S3 bucket declared in
           // next.config.ts under images.remotePatterns.
@@ -46,36 +51,24 @@ export default function ProductCard({ product }: { product: Product }) {
             {product.name.slice(0, 1)}
           </span>
         )}
-        {!product.inStock && <span className={styles.badge}>Out of stock</span>}
       </div>
 
       <div className={styles.body}>
-        <span className={styles.category}>
-          {product.category}
-          {product.country !== null && ` · ${product.country}`}
-        </span>
-
         <span className={styles.name}>{product.name}</span>
+        {facts.length > 0 && <span className={styles.facts}>{facts}</span>}
 
         <div className={styles.priceRow}>
           <span className={styles.price}>{formatMoney(product.price, product.currency)}</span>
-          <span className={styles.unit}>/ {product.unitType}</span>
+          <span className={styles.unit}>/{product.unitType}</span>
           {product.listPrice !== null && (
             <span className={styles.listPrice}>
               {formatMoney(product.listPrice, product.currency)}
             </span>
           )}
-        </div>
-
-        <div className={styles.meta}>
           {product.minQuantity !== null && (
-            <span>
-              Min {formatCount(product.minQuantity)} {product.unitType}
-            </span>
+            <span className={styles.moq}>min {formatCount(product.minQuantity)}</span>
           )}
-          {product.rating !== null && product.rating > 0 && (
-            <span>★ {product.rating.toFixed(1)}</span>
-          )}
+          {!product.inStock && <span className={styles.oos}>out of stock</span>}
         </div>
       </div>
     </>

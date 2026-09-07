@@ -1,4 +1,4 @@
-import { MAX_PRODUCTS_PER_SEARCH } from "@/lib/limits";
+import { MAX_PRODUCTS_PER_SEARCH } from "@/shared/limits";
 import type {
   Product,
   ProductQuery,

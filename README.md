@@ -31,7 +31,7 @@ stage buyer API is public, and the endpoint is the only default that matters.
 
 ## The catalog integration
 
-[`src/lib/products/wtx-source.ts`](src/lib/products/wtx-source.ts) owns
+[`src/ai/catalog/wtx-source.ts`](src/ai/catalog/wtx-source.ts) owns
 everything WTX-specific. What it does and why:
 
 | Concern | How it is handled |
@@ -79,7 +79,7 @@ browser ── POST /api/chat ──▶ route handler
         SSE: status → products → text → done
 ```
 
-The loop is in [`src/app/api/chat/route.ts`](src/app/api/chat/route.ts) and runs
+The loop is in [`src/ai/chat.ts`](src/ai/chat.ts) and runs
 at most `MAX_TOOL_TURNS` (3) times, so a second looser search is possible but a
 runaway loop is not.
 
@@ -97,41 +97,58 @@ Two design choices worth knowing:
 
 ## Layout
 
+The project is split three ways: `ai/` is server-only and knows nothing about
+React, `components/` + `hooks/` are pure UI and never import from `ai/`, and the
+route handler is the single bridge between them.
+
 ```
 src/
-  app/
-    api/chat/route.ts        validation, the tool-calling loop, SSE output
-    layout.tsx  page.tsx     shell
-    globals.css              design tokens (light + dark) and the reset
-  components/
-    Chat/                    Chat, MessageList, Message, Composer
-    Products/                ProductGrid, ProductCard
-  hooks/useChat.ts           conversation state + the fetch/read loop
-  lib/
-    anthropic.ts             lazy SDK client, error → safe message mapping
-    config.ts                model, system prompt, tool-turn cap
-    limits.ts                limits shared by client and server
-    stream.ts                SSE encode / parse helpers
-    tools.ts                 search_products schema, executor, arg validation
-    products/
-      index.ts               selects the ProductSource
-      wtx-source.ts          the GraphQL call and the field mapping
-  types/
+  ai/                      ← server-only; no React, no DOM
+    chat.ts                the agentic loop: stream, run tools, feed back, repeat
+    client.ts              lazy SDK client, error → safe message mapping
+    config.ts              model, token ceiling, tool-turn cap, system prompt
+    tools.ts               search_products schema, executor, argument validation
+    catalog/
+      index.ts             selects the ProductSource
+      wtx-source.ts        the GraphQL call and the field mapping
+
+  components/              ← UI only; imports nothing from ai/
+    Chat/                  Chat, MessageList, Message, Composer
+    Products/              ProductGrid, ProductCard
+  hooks/useChat.ts         conversation state + the fetch/read loop
+
+  shared/                  ← both sides
+    limits.ts              history, message and result caps
+    stream.ts              SSE encode / parse
+    branding.ts            bot display name
+
+  types/                   ← both sides
     chat.ts  product.ts
+
+  app/
+    api/chat/route.ts      the bridge: validate → streamChatReply → SSE
+    layout.tsx  page.tsx   shell
+    globals.css            design tokens (light + dark) and the reset
 ```
+
+`route.ts` holds no model or catalog logic — it validates the request, calls
+`streamChatReply`, and encodes whatever that emits. Swapping transports (a
+different framework, a WebSocket, a test harness) means writing a new sink for
+`ChatEventSink`, not touching the loop.
+
 
 ## Tuning
 
 | Want to change | Where |
 | --- | --- |
-| Model, or the system prompt | `src/lib/config.ts` |
-| Reasoning depth / cost | `output_config.effort` in `route.ts` — `"medium"` now; `"low"` is faster, `"high"` picks filters more carefully |
-| What the tool accepts | `tools` in `src/lib/tools.ts` — the descriptions are what teach the model to use it |
-| Results per search | `MAX_PRODUCTS_PER_SEARCH` in `src/lib/limits.ts` |
-| Over-fetch width for local filters | `OVER_FETCH_FACTOR` / `MAX_SERVER_PAGE` in `wtx-source.ts` |
+| Model, or the system prompt | `src/ai/config.ts` |
+| Reasoning depth / cost | `output_config.effort` in `src/ai/chat.ts` — `"medium"` now; `"low"` is faster, `"high"` picks filters more carefully |
+| What the tool accepts | `tools` in `src/ai/tools.ts` — the descriptions are what teach the model to use it |
+| Results per search | `MAX_PRODUCTS_PER_SEARCH` in `src/shared/limits.ts` |
+| Over-fetch width for local filters | `OVER_FETCH_FACTOR` / `MAX_SERVER_PAGE` in `src/ai/catalog/wtx-source.ts` |
 | Card design | `src/components/Products/ProductCard.module.css` |
 
-A refusal fallback is enabled in `route.ts` (`betas` + `fallbacks`): if Claude
+A refusal fallback is enabled in `src/ai/chat.ts` (`betas` + `fallbacks`): if Claude
 declines a request on safety grounds, the API retries it on `claude-opus-4-8`
 inside the same call. Delete those two lines and change
 `client.beta.messages.stream` to `client.messages.stream` to opt out.

@@ -1,5 +1,5 @@
 import ProductGrid from "@/components/Products/ProductGrid";
-import { BOT_NAME } from "@/lib/config";
+import { BOT_NAME } from "@/shared/branding";
 import type { UiMessage } from "@/types/chat";
 
 import styles from "./Message.module.css";

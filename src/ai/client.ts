@@ -26,6 +26,15 @@ export function describeAnthropicError(error: unknown): { status: number; messag
     return { status: 429, message: "Rate limited by the Claude API. Try again in a moment." };
   }
   if (error instanceof Anthropic.BadRequestError) {
+    // A zero credit balance arrives as a 400, not a 402 — worth naming, since
+    // otherwise it reads like a broken key.
+    if (/credit balance|insufficient|quota/i.test(error.message)) {
+      return {
+        status: 402,
+        message:
+          "The Anthropic account has no credit. Add credit in the Console under Billing.",
+      };
+    }
     return { status: 400, message: "The Claude API rejected this request." };
   }
   if (error instanceof Anthropic.APIConnectionError) {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "@/hooks/useChat";
-import { BOT_NAME } from "@/lib/config";
+import { BOT_NAME } from "@/shared/branding";
 
 import styles from "./Chat.module.css";
 import Composer from "./Composer";
